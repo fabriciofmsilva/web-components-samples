@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Framework agnostic</title>
+</head>
+<body>
+  <h1>Framework agnostic</h1>
+  <h2>Angular</h2>
+  <script>
+    import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+
+    @NgModule({
+      /** Omitted */
+      schemas: [ CUSTOM_ELEMENTS_SCHEMA ]
+    })
+    export class MyModuleAllowsCustomElements {}
+  </script>
+
+  <one-dialog [open]="isDialogOpen" (dialog-closed)="dialogClosed($event)">
+    <span slot="heading">Heading text</span>
+    <div>
+      <p>Body copy</p>
+    </div>
+  </one-dialog>
+
+  <h2>Vue</h2>
+  <one-dialog v-bind:open="isDialogOpen" v-on:dialog-closed="dialogClosed">
+    <span slot="heading">Heading text</span>
+    <div>
+      <p>Body copy</p>
+    </div>
+  </one-dialog>
+
+  <h2>React</h2>
+  <script>
+    import React, { Component, createRef } from 'react';
+
+    export default class MyComponent extends Component {
+      constructor(props) {
+        super(props);
+        // Create the ref
+        this.dialog = createRef();
+        // Bind our method to the instance
+        this.onDialogClosed = this.onDialogClosed.bind(this);
+
+        this.state = {
+          open: false
+        };
+      }
+
+      componentDidMount() {
+        // Once the component mounds, add the event listener
+        this.dialog.current.addEventListener('dialog-closed', this.onDialogClosed);
+      }
+
+      componentWillUnmount() {
+        // When the component unmounts, remove the listener
+        this.dialog.current.removeEventListener('dialog-closed', this.onDialogClosed);
+      }
+
+      onDialogClosed(event) { /** Omitted **/ }
+
+      render() {
+        return <div>
+          <one-dialog open={this.state.open} ref={this.dialog}>
+            <span slot="heading">Heading text</span>
+            <div>
+              <p>Body copy</p>
+            </div>
+          </one-dialog>
+        </div>
+      }
+    }
+  </script>
+
+  <script>
+    import React, { useState, useEffect, useRef } from 'react';
+
+    export default function MyComponent(props) {
+      const [ dialogOpen, setDialogOpen ] = useState(false);
+      const oneDialog = useRef(null);
+      const onDialogClosed = event => console.log(event);
+
+      useEffect(() => {
+        oneDialog.current.addEventListener('dialog-closed', onDialogClosed);
+        return () => oneDialog.current.removeEventListener('dialog-closed', onDialogClosed)
+      });
+
+      return <div>
+          <button onClick={() => setDialogOpen(true)}>Open dialog</button>
+          <one-dialog ref={oneDialog} open={dialogOpen}>
+            <span slot="heading">Heading text</span>
+            <div>
+              <p>Body copy</p>
+            </div>
+          </one-dialog>
+        </div>
+    }
+  </script>
+
+  <script>
+    import React, { Component, createRef } from 'react';
+    import PropTypes from 'prop-types';
+
+    export default class OneDialog extends Component {
+      constructor(props) {
+        super(props);
+        // Create the ref
+        this.dialog = createRef();
+        // Bind our method to the instance
+        this.onDialogClosed = this.onDialogClosed.bind(this);
+      }
+
+      componentDidMount() {
+        // Once the component mounds, add the event listener
+        this.dialog.current.addEventListener('dialog-closed', this.onDialogClosed);
+      }
+
+      componentWillUnmount() {
+        // When the component unmounts, remove the listener
+        this.dialog.current.removeEventListener('dialog-closed', this.onDialogClosed);
+      }
+
+      onDialogClosed(event) {
+        // Check to make sure the prop is present before calling it
+        if (this.props.onDialogClosed) {
+          this.props.onDialogClosed(event);
+        }
+      }
+
+      render() {
+        const { children, onDialogClosed, ...props } = this.props;
+        return <one-dialog {...props} ref={this.dialog}>
+          {children}
+        </one-dialog>
+      }
+    }
+
+    OneDialog.propTypes = {
+      children: children: PropTypes.oneOfType([
+          PropTypes.arrayOf(PropTypes.node),
+          PropTypes.node
+      ]).isRequired,
+      onDialogClosed: PropTypes.func
+    };
+  </script>
+
+  <script>
+    import React, { useRef, useEffect } from 'react';
+    import PropTypes from 'prop-types';
+
+    export default function OneDialog(props) {
+      const { children, onDialogClosed, ...restProps } = props;
+      const oneDialog = useRef(null);
+      
+      useEffect(() => {
+        onDialogClosed ? oneDialog.current.addEventListener('dialog-closed', onDialogClosed) : null;
+        return () => {
+          onDialogClosed ? oneDialog.current.removeEventListener('dialog-closed', onDialogClosed) : null;  
+        };
+      });
+
+      return <one-dialog ref={oneDialog} {...restProps}>{children}</one-dialog>
+    }
+  </script>
+
+  <script>
+    import React, { useState } from 'react';
+    import OneDialog from './OneDialog';
+
+    export default function MyComponent(props) {
+      const [open, setOpen] = useState(false);
+      return <div>
+        <button onClick={() => setOpen(true)}>Open dialog</button>
+        <OneDialog open={open} onDialogClosed={() => setOpen(false)}>
+          <span slot="heading">Heading text</span>
+          <div>
+            <p>Body copy</p>
+          </div>
+        </OneDialog>
+      </div>
+    }
+  </script>
+</body>
+</html>
