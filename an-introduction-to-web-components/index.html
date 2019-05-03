@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Web Components</title>
+</head>
+<body>
+  <h1>Web Components</h1>
+  <!-- Custom elements -->
+  <h2>Custom elements</h2>
+  <my-component></my-component>
+  <script src="/js/my-component.js"></script>
+  <!-- Custom elements -->
+
+  <!-- Shadow DOM -->
+  <h2>Shadow DOM</h2>
+  <div>
+    <div id="example">This will use the CSS background</div>
+    <button id="button">Not tomato</button>
+  </div>
+  <script>
+    const shadowRoot = document.getElementById('example').attachShadow({ mode: 'open' });
+    shadowRoot.innerHTML = `<style>
+    button {
+      background: tomato;
+      color: white;
+    }
+    </style>
+    <button id="button"><slot></slot> tomato</button>`;
+  </script>
+  <!-- Shadow DOM -->
+
+  <!-- HTML templates -->
+  <h2>HTML templates</h2>
+  <style>
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+  </style>
+  <template id="book-template">
+    <li><span class="title"></span> &mdash; <span class="author"></span></li>
+  </template>
+  
+  <template id="book-template-2">
+    <li><span class="author"></span>'s classic novel <span class="title"></span></li>
+  </template>
+  
+  <ul id="books"></ul>
+  
+  <fieldset id="templates">
+    <legend>Choose template</legend>
+    
+    <label>
+      <input type="radio" name="template" value="book-template" checked> Template One
+    </label>
+    <label>
+      <input type="radio" name="template" value="book-template-2"> Template Two
+    </label>
+  </fieldset>
+  
+  <ul id="books"></ul>
+  <script>
+    const books = [
+      { title: 'The Great Gatsby', author: 'F. Scott Fitzgerald' },
+      { title: 'A Farewell to Arms', author: 'Ernest Hemingway' },
+      { title: 'Catch 22', author: 'Joseph Heller' }
+    ];
+
+    function appendBooks(templateId) {
+      const booksList = document.getElementById('books');
+      const fragment = document.getElementById(templateId);
+      
+      // Clear out the content from the ul
+      booksList.innerHTML = '';
+      
+      // Loop over the books and modify the given template
+      books.forEach(book => {
+        // Create an instance of the template content
+        const instance = document.importNode(fragment.content, true);
+        // Add relevant content to the template
+        instance.querySelector('.title').innerHTML = book.title;
+        instance.querySelector('.author').innerHTML = book.author;
+        // Append the instance ot the DOM
+        booksList.appendChild(instance);
+      });  
+    }
+
+
+    document.getElementById('templates').addEventListener('change', (event) => appendBooks(event.target.value));
+
+    appendBooks('book-template');
+  </script>
+  <!-- HTML templates -->
+</body>
+</html>
